@@ -1,0 +1,10 @@
+Keras
+matplotlib
+numpy
+scikit-image
+scikit-learn
+opencv-python
+imageio
+pygame
+tensorflow
+
