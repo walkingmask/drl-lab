@@ -1,3 +1,11 @@
+hparams.py
+results/
+
+gym/
+ple/
+gym-ple/
+
+
 # Created by https://www.gitignore.io/api/macos,python
 
 ### macOS ###

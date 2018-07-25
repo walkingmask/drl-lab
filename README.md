@@ -1,5 +1,5 @@
-# drl_lab
-Facilitates experiments on deep reinforcement learning. Using OpenAi'gym 
+# Deep Reinforcement Learning Laboratory
+Facilitates experiments on deep reinforcement learning. Using OpenAi's gym.
 
 
 ## Install
@@ -8,6 +8,10 @@ Facilitates experiments on deep reinforcement learning. Using OpenAi'gym
 cd /path/to/your/workspace
 git clone https://github.com/walkingmask/drl_lab.git
 cd drl_lab
+# after install gym-ple (at jupyter terminal)
+cp games/breakout_pygame.py ple/ple/games/
+vim gym-ple/gym_ple/__init__.py
+# add 'Breakout_pygame' in the list at line 5
 ```
 
 ### Local
@@ -17,14 +21,10 @@ pyenv install anaconda3-5.0.0
 pyenv virtualenv anaconda3-5.0.0 drl_lab
 pyenv local drl_lab
 pip install -U pip
-conda update -y conda
 pip install -r requirements.txt
 git clone https://github.com/openai/gym.git && cd gym && pip install -e . && cd ..
 git clone https://github.com/ntasfi/PyGame-Learning-Environment.git ./ple && cd ple && pip install -e . && cd ..
 git clone https://github.com/lusob/gym-ple.git && cd gym-ple && pip install -e . && cd ..
-cp games/breakout_pygame.py ple/ple/games/
-vim gym-ple/gym-ple/__init__.py
-# add 'Breakout_pygame' in the list at line 5
 ```
 
 ### Local Docker(Mac)
@@ -32,10 +32,6 @@ vim gym-ple/gym-ple/__init__.py
 # at local terminal
 bash docker/local/run
 open http://localhost:58888
-# at jupyter terminal
-cp drl_lab/games/breakout_pygame.py ple/ple/games/
-vim gym-ple/gym-ple/__init__.py
-# add 'Breakout_pygame' in the list at line 5
 ```
 
 ### Remote Docker (with GeForce GT 730)
@@ -44,10 +40,6 @@ vim gym-ple/gym-ple/__init__.py
 bash docker/remote_low/run
 # at local terminal
 open http://{remote_host}:58888
-# at jupyter terminal
-cp drl_lab/games/breakout_pygame.py ple/ple/games/
-vim gym-ple/gym-ple/__init__.py
-# add 'Breakout_pygame' in the list at line 5
 ```
 
 ### Remote Docker (with GeForce GTX 1060)
@@ -56,10 +48,6 @@ vim gym-ple/gym-ple/__init__.py
 bash docker/remote/run
 # at local terminal
 open http://{remote_host}:58888
-# at jupyter terminal
-cp drl_lab/games/breakout_pygame.py ple/ple/games/
-vim gym-ple/gym-ple/__init__.py
-# add 'Breakout_pygame' in the list at line 5
 ```
 
 

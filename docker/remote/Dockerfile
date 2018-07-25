@@ -1,6 +1,6 @@
 FROM nvidia/cuda:9.0-cudnn7-devel
 
-MAINTAINER k188583@ie.u-ryukyu.ac.jp
+LABEL  maintainer k188583@ie.u-ryukyu.ac.jp
 
 USER root
 
@@ -24,7 +24,7 @@ RUN apt-get update && \
     apt-get clean
 
 RUN groupadd $U_NAME -g $G_ID && \
-    useradd $U_NAME -m -u $U_ID -g $G_ID
+    useradd $U_NAME -m -u $U_ID -g $G_ID && \
     echo "%$U_NAME ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers.d/$U_NAME
 
 COPY ["jupyter_notebook_config.py", "jl", "tb", "/"]
@@ -51,15 +51,15 @@ RUN  pyenv install anaconda3-5.0.0 && \
      conda update -y conda && \
      pip install \
         jupyterlab \
-        tensorflow-gpu \
-        Keras \
-        matplotlib \
-        numpy \
-        scikit-image \
-        scikit-learn \
-        opencv-python \
-        imageio \
-        pygame \
+        'imageio==2.2.0' \
+        'Keras==2.1.6' \
+        'matplotlib==2.0.2' \
+        'numpy==1.14.3' \
+        'opencv-python==3.4.1.15' \
+        'pygame==1.9.4' \
+        'scikit-image==0.13.0' \
+        'scikit-learn==0.19.0' \
+        'tensorflow-gpu==1.5.0' \
     && \
     git clone https://github.com/openai/gym.git && \
     cd gym && \
