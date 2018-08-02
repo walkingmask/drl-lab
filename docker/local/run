@@ -1,6 +1,6 @@
 here=$(cd $(dirname $0) && pwd)
 
-U_NAME=k188583
+U_NAME=$USER
 
 docker build \
 -t drl-lab:latest $here \

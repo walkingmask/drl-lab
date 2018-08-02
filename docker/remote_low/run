@@ -1,6 +1,6 @@
 here=$(cd $(dirname $0) && pwd)
 
-U_NAME=k188583
+U_NAME=$USER
 U_ID=$(id -u)
 G_ID=$(id -g)
 
