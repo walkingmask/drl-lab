@@ -14,7 +14,7 @@ from drl_lab.expt import Experiment
 # default hyper parameters
 
 env_hparams = {
-    'env_id': 'Pixelcopter-v0',
+    'env_id': 'Breakout_pygame-v0',
     'observation': {
         'normalize': False,
         'rescaled_shape': [],
@@ -46,7 +46,7 @@ nn_hparams = {
     'saved_model': None,
 }
 
-# overwrite
+# overwrite with arguments
 
 parser = ArgumentParser()
 parser.add_argument('--name', default='exp', help='Experiment name.')

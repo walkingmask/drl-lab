@@ -5,6 +5,8 @@ gym/
 ple/
 gym-ple/
 
+.vscode/
+
 
 # Created by https://www.gitignore.io/api/macos,python
 

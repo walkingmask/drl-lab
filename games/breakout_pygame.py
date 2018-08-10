@@ -1,19 +1,18 @@
 import sys
 
-import pygame
-from pygame.constants import K_w, K_s
 from ple.games.base.pygamewrapper import PyGameWrapper
 from ple.games.utils.vec2d import vec2d
 from ple.games.utils import percent_round_int
+import pygame
+from pygame.constants import K_w, K_s
 
 
 class BallShadow(pygame.sprite.Sprite):
     def __init__(self, radius, speed, rng,
                  pos_init, SCREEN_WIDTH, SCREEN_HEIGHT, init_x, init_y):
-
         pygame.sprite.Sprite.__init__(self)
 
-        self.radius = int(radius*0.75)
+        self.radius = int(radius * 0.75)
         self.speed = speed
         self.pos = vec2d((init_x, init_y))
         self.pos_before = vec2d((init_x, init_y))
@@ -30,7 +29,7 @@ class BallShadow(pygame.sprite.Sprite):
             (122, 255, 255),
             (radius, radius),
             radius,
-            0
+            0,
         )
 
         self.image = image
@@ -39,10 +38,8 @@ class BallShadow(pygame.sprite.Sprite):
 
 
 class Ball(pygame.sprite.Sprite):
-
     def __init__(self, radius, speed, rng,
                  pos_init, SCREEN_WIDTH, SCREEN_HEIGHT):
-
         pygame.sprite.Sprite.__init__(self)
 
         self.rng = rng
@@ -64,7 +61,7 @@ class Ball(pygame.sprite.Sprite):
             (255, 255, 255),
             (radius, radius),
             radius,
-            0
+            0,
         )
 
         self.image = image
@@ -73,9 +70,9 @@ class Ball(pygame.sprite.Sprite):
 
         self.playerHit = False
 
-    def line_intersection(self, p0_x, p0_y, p1_x,
-                          p1_y, p2_x, p2_y, p3_x, p3_y):
-
+    # 当たり判定関数
+    def line_intersection(self, p0_x, p0_y, p1_x, p1_y,
+                          p2_x, p2_y, p3_x, p3_y):
         s1_x = p1_x - p0_x
         s1_y = p1_y - p0_y
         s2_x = p3_x - p2_x
@@ -89,26 +86,29 @@ class Ball(pygame.sprite.Sprite):
         return (s >= 0 and s <= 1 and t >= 0 and t <= 1)
 
     def update(self, agentPlayer, dt):
-
         self.pos.x += self.vel.x * dt
         self.pos.y += self.vel.y * dt
 
         is_pad_hit = False
-        ####
         self.playerHit = False
 
-        radius = agentPlayer.pos.y-(agentPlayer.rect_height/2)
-        if self.pos.y+self.radius >= radius:
-            if self.line_intersection(self.pos_before.x, self.pos_before.y,
-                                      self.pos.x, self.pos.y,
+        radius = agentPlayer.pos.y - (agentPlayer.rect_height / 2)
+
+        # Paddle との当たり判定
+        if self.pos.y + self.radius >= radius:
+            if self.line_intersection(self.pos_before.x,
+                                      self.pos_before.y,
+                                      self.pos.x,
+                                      self.pos.y,
                                       (agentPlayer.pos.x +
-                                       agentPlayer.rect_width/2),
+                                       agentPlayer.rect_width / 2),
                                       (agentPlayer.pos.y -
-                                       agentPlayer.rect_height/2),
+                                       agentPlayer.rect_height / 2),
                                       (agentPlayer.pos.x -
-                                       agentPlayer.rect_width/2),
+                                       agentPlayer.rect_width / 2),
                                       (agentPlayer.pos.y -
-                                       agentPlayer.rect_height/2)):
+                                       agentPlayer.rect_height / 2)):
+                # TODO: コメントアウト削除 or リコメントアウト
                 # self.pos.x = max(0, self.pos.x)
                 # exchaged x,y
                 self.vel.y = -1 * (self.vel.y)  # + self.speed * 0.01)
@@ -116,25 +116,6 @@ class Ball(pygame.sprite.Sprite):
                 self.pos.y -= self.radius
                 is_pad_hit = True
                 self.playerHit = True
-
-        """
-        if self.pos.x >= cpuPlayer.pos.x - cpuPlayer.rect_width:
-            if self.line_intersection(self.pos_before.x, self.pos_before.y,
-                                      self.pos.x, self.pos.y,
-                                      (cpuPlayer.pos.x -
-                                       cpuPlayer.rect_width/2),
-                                      (cpuPlayer.pos.y -
-                                       cpuPlayer.rect_height/2),
-                                      (cpuPlayer.pos.x -
-                                       cpuPlayer.rect_width/2),
-                                      (cpuPlayer.pos.y +
-                                       cpuPlayer.rect_height/2)):
-                self.pos.x = min(self.SCREEN_WIDTH, self.pos.x)
-                self.vel.x = -1 * (self.vel.x + self.speed * 0.05)
-                self.vel.y += cpuPlayer.vel.y * 0.006
-                self.pos.x -= self.radius
-                is_pad_hit = True
-        """
 
         # Little randomness in order not to stuck in a static loop
         if is_pad_hit:
@@ -144,12 +125,6 @@ class Ball(pygame.sprite.Sprite):
             self.vel.y *= -0.99
             self.pos.y += 1.0
 
-        """
-        if self.pos.y + self.radius >= self.SCREEN_WIDTH:
-            self.vel.y *= -0.99
-            self.pos.y -= 1.0
-        """
-
         if self.pos.x - self.radius <= 0:
             self.vel.x *= -0.99
             self.pos.x += 1.0
@@ -157,9 +132,6 @@ class Ball(pygame.sprite.Sprite):
         if self.pos.x + self.radius >= self.SCREEN_WIDTH:
             self.vel.x *= -0.99
             self.pos.x -= 1.0
-
-        # pygame.draw.line(self.image,(122,255,255),( 0, 0),
-        #    ( 30,30),2)
 
         self.pos_before.x = self.pos.x
         self.pos_before.y = self.pos.y
@@ -169,8 +141,7 @@ class Ball(pygame.sprite.Sprite):
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, speed, rect_width, rect_height,
-                 pos_init, SCREEN_WIDTH, SCREEN_HEIGHT, isPlayer=True):
-
+                 pos_init, SCREEN_WIDTH, SCREEN_HEIGHT):
         pygame.sprite.Sprite.__init__(self)
 
         self.speed = speed
@@ -186,20 +157,12 @@ class Player(pygame.sprite.Sprite):
         image.fill((0, 0, 0, 0))
         image.set_colorkey((0, 0, 0))
 
-        if isPlayer:
-            pygame.draw.rect(
-                image,
-                (255, 255, 255),
-                (0, 0, rect_width, rect_height),
-                0
-            )
-        else:
-            pygame.draw.rect(
-                image,
-                (255, 255, 255),
-                (0, 0, rect_width, rect_height),
-                0
-            )
+        pygame.draw.rect(
+            image,
+            (255, 255, 255),
+            (0, 0, rect_width, rect_height),
+            0,
+        )
 
         self.image = image
         self.rect = self.image.get_rect()
@@ -209,7 +172,6 @@ class Player(pygame.sprite.Sprite):
         self.vel.x += dx * dt
         self.vel.x *= 0.9
 
-        # self.pos.y += self.vel.y
         self.pos.x += dx * dt
 
         if self.pos.x - self.rect_height / 2 <= 0:
@@ -226,11 +188,11 @@ class Player(pygame.sprite.Sprite):
 class Block(pygame.sprite.Sprite):
     def __init__(self, rect_width, rect_height,
                  pos_init, SCREEN_WIDTH, SCREEN_HEIGHT):
-
         pygame.sprite.Sprite.__init__(self)
 
         self.pos = vec2d(pos_init)
 
+        # TODO: コメントアウト削除 or リコメントアウト
         # rect_height-=2 #buffers
         # rect_width-=2
 
@@ -248,7 +210,7 @@ class Block(pygame.sprite.Sprite):
             image,
             (255, 255, 255),
             (0, 0, rect_width, rect_height),
-            0
+            0,
         )
 
         self.image = image
@@ -287,13 +249,11 @@ class Breakout_pygame(PyGameWrapper):
         Speed of ball (useful for curriculum learning)
 
     """
-
     def __init__(self, width=60, height=60, cpu_speed_ratio=0.7,
                  players_speed_ratio=0.9, ball_speed_ratio=0.4,  MAX_SCORE=1):
-
         actions = {
             "up": K_w,
-            "down": K_s
+            "down": K_s,
         }
 
         PyGameWrapper.__init__(self, width, height, actions=actions)
@@ -322,7 +282,7 @@ class Breakout_pygame(PyGameWrapper):
         self.score_sum = 0.0
         self.score_counts = {
             "agent": 0.0,
-            "cpu": 0.0
+            "cpu": 0.0,
         }
 
     def _handle_player_events(self):
@@ -362,7 +322,6 @@ class Breakout_pygame(PyGameWrapper):
 
         Returns
         -------
-
         dict
             * player y position.
             * players velocity.
@@ -373,16 +332,14 @@ class Breakout_pygame(PyGameWrapper):
             * ball y velocity.
 
             See code for structure.
-
         """
         state = {
             "player_y": self.agentPlayer.pos.y,
             "player_velocity": self.agentPlayer.vel.y,
-            # "cpu_y": self.cpuPlayer.pos.y,
             "ball_x": self.ball.pos.x,
             "ball_y": self.ball.pos.y,
             "ball_velocity_x": self.ball.vel.x,
-            "ball_velocity_y": self.ball.vel.y
+            "ball_velocity_y": self.ball.vel.y,
         }
 
         return state
@@ -392,14 +349,12 @@ class Breakout_pygame(PyGameWrapper):
         # return self.tickScore
 
     def game_over(self):
-        # pong used 11 as max score
         return (self.score_counts['agent'] == self.MAX_SCORE)
-        # or (self.score_counts['cpu'] == self.MAX_SCORE)
 
     def init(self):
         self.score_counts = {
             "agent": 0.0,
-            "cpu": 0.0
+            "cpu": 0.0,
         }
 
         self.score_sum = 0.0
@@ -415,19 +370,23 @@ class Breakout_pygame(PyGameWrapper):
             self.ball_radius,
             self.ball_speed_ratio * self.height,
             self.rng,
-            (self.width - (self.width/4), self.height / 2),
+            (self.width - (self.width / 4), self.height / 2),
             self.width,
-            self.height
+            self.height,
         )
 
         self.agentPlayer = Player(
             self.players_speed_ratio * self.height,
             self.paddle_width,
             self.paddle_height,
-            (((self.width/2) - (self.paddle_width/2)),
-             self.height - (self.paddle_height/2)),
+            (
+                # TODO: これ大丈夫？
+                (self.width / 2) - (self.paddle_width / 2),
+                self.height - (self.paddle_height / 2)
+            ),
             self.width,
-            self.height)
+            self.height,
+        )
 
         # blocks
         self.blocks_group = pygame.sprite.Group()
@@ -436,26 +395,25 @@ class Breakout_pygame(PyGameWrapper):
         numBlockPerRow = 10
         numRow = 6
 
-        blockW = self.width/numBlockPerRow
-        blockH = blockW*0.5
+        blockW = self.width / numBlockPerRow
+        blockH = blockW * 0.5
 
-        rd = self.height/7  # space above
-        cd = blockW/2
+        rd = self.height / 7  # space above
+        cd = blockW / 2
+
         for row in range(numRow):
-
             for column in range(numBlockPerRow):
                 block = Block(blockW, blockH, (cd, rd),
                               self.width, self.height)
                 self.blocks_group.add(block)
                 cd += blockW  # +buff
-            cd = blockW/2
+            cd = blockW / 2
             rd += blockH  # +buff
 
         self.players_group = pygame.sprite.Group()
         self.players_group.add(self.agentPlayer)
 
         self.ball_group = pygame.sprite.Group()
-
         self.ball_group.add(self.ball)
 
     def reset(self):
@@ -466,15 +424,15 @@ class Breakout_pygame(PyGameWrapper):
         # self._reset_ball(-1)
 
     def _reset_ball(self, direction=-1):
-        self.ball.pos.x = self.width/2  # move it to the center
-        self.ball.pos.y = self.height/2
+        self.ball.pos.x = self.width / 2  # move it to the center
+        self.ball.pos.y = self.height / 2
 
         # we go in the same direction that they lost in but at starting vel.
         self.ball.vel.x = ((self.rng.random_sample() * self.ball.speed) -
                            self.ball.speed * 0.5)
         # self.ball.vel.y = ((self.rng.random_sample() * self.ball.speed) -
         #                    self.ball.speed * 0.5)
-        self.ball.vel.y = self.ball_speed_ratio*self.height
+        self.ball.vel.y = self.ball_speed_ratio * self.height
 
     def step(self, dt):
         self.steps += 1
@@ -498,15 +456,15 @@ class Breakout_pygame(PyGameWrapper):
 
         if len(self.shadows) < self.tailLen:
             shadow = BallShadow(
-                        self.ball_radius,
-                        self.ball_speed_ratio * self.height,
-                        self.rng,
-                        (self.width / 2, self.height / 2),
-                        self.width,
-                        self.height,
-                        self.ball.pos.x,
-                        self.ball.pos.y
-                    )
+                self.ball_radius,
+                self.ball_speed_ratio * self.height,
+                self.rng,
+                (self.width / 2, self.height / 2),
+                self.width,
+                self.height,
+                self.ball.pos.x,
+                self.ball.pos.y,
+            )
             # self.players_group.add(shadow)
             self.shadows.append(shadow)
         else:
@@ -514,7 +472,8 @@ class Breakout_pygame(PyGameWrapper):
             self.shadows[self.goback].pos.y = self.ball.pos.y
             self.shadows[self.goback].rect.center = (
                 self.shadows[self.goback].pos.x,
-                self.shadows[self.goback].pos.y)
+                self.shadows[self.goback].pos.y,
+            )
             self.goback += 1
             if self.goback == self.tailLen:
                 self.goback = 0
@@ -527,9 +486,9 @@ class Breakout_pygame(PyGameWrapper):
 
         # blocks
         for b in self.blocks_group.sprites():
-            if self.ball.pos.y-self.ball.radius < b.pos.y+b.rect_height:
-                abs_pos_x = abs(b.pos.x-self.ball.pos.x)
-                if abs_pos_x < b.rect_width/2 + self.ball.radius:
+            if self.ball.pos.y - self.ball.radius < b.pos.y + b.rect_height:
+                abs_pos_x = abs(b.pos.x - self.ball.pos.x)
+                if abs_pos_x < (b.rect_width / 2) + self.ball.radius:
                     self.blocks_group.remove(b)
                     # reward
                     self.score_sum += self.rewards["positive"]

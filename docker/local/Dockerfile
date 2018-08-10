@@ -1,10 +1,10 @@
 FROM ubuntu:16.04
 
-LABEL  maintainer k188583@ie.u-ryukyu.ac.jp
+LABEL  maintainer walkingmask@gmail.com
 
 USER root
 
-ARG U_NAME=k188583
+ARG U_NAME=walkingmask
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -41,12 +41,12 @@ RUN mkdir .pyenv && git clone git://github.com/yyuu/pyenv.git .pyenv
 ENV PYENV_ROOT $HOME/.pyenv
 ENV PATH $PYENV_ROOT/versions/anaconda3-5.0.0/bin:$PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
 
-RUN  pyenv install anaconda3-5.0.0 && \
-     pyenv global anaconda3-5.0.0 && \
-     pyenv rehash && \
-     pip install -U pip && \
-     conda update -y conda && \
-     pip install \
+RUN pyenv install anaconda3-5.0.0 && \
+    pyenv global anaconda3-5.0.0 && \
+    pyenv rehash && \
+    pip install -U pip && \
+    conda update -y conda && \
+    pip install \
         jupyterlab \
         'imageio==2.2.0' \
         'Keras==2.1.6' \
@@ -56,7 +56,7 @@ RUN  pyenv install anaconda3-5.0.0 && \
         'pygame==1.9.4' \
         'scikit-image==0.13.0' \
         'scikit-learn==0.19.0' \
-        'tensorflow==1.5.0' \
+        'tensorflow==1.8.0' \
     && \
     git clone https://github.com/openai/gym.git && \
     cd gym && \
