@@ -1,10 +1,8 @@
-from copy import deepcopy  # NOQA
 import numpy as np
 import os
 
 from PIL import Image
 
-from drl_lab.env import Action
 from drl_lab.models import load_model
 
 
@@ -14,10 +12,7 @@ Variables
 """
 
 
-actions = [Action(0, [0, 1], True),
-           Action(1, [0, 1], True),
-           Action(2, [0, 1], True),
-           Action(3, [0, 1], True)]
+actions = [0, 1, 2, 3]
 dataset_num = 100
 obs_shape = [48, 48, 3]
 state_shape = obs_shape
@@ -31,7 +26,7 @@ dataset = [{
             'output': np.random.permutation([1, 0, 0, 0])
            } for i in range(dataset_num)]
 env_hparams = {
-    'env_id': 'Pixelcopter-v0',
+    'env_id': 'Breakout_pygame-v0',
     'observation': {
         'normalize': False,
         'rescaled_shape': [],
@@ -81,11 +76,16 @@ def get_resources_dir():
     return resources_root
 
 
-def get_test_model(model_name='model1'):
+def get_test_model_path(model_name='model01'):
     resource_dir = get_resources_dir()
     model_path = resource_dir+'/models/'+model_name
     if not os.path.exists(model_path):
         raise FileNotFoundError(model_path)
+    return model_path
+
+
+def get_test_model(model_name='model01'):
+    model_path = get_test_model_path(model_name)
     return load_model(model_path)
 
 
@@ -132,6 +132,12 @@ def get_results_dir(dir_name):
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
     return results_dir
+
+
+"""
+Utils
+-----
+"""
 
 
 def weights_equal(source_model, target_model):

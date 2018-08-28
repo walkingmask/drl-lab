@@ -4,17 +4,15 @@ import random
 import keras
 import numpy as np
 
-from drl_lab.models import QCNN, state2data
+from drl_lab.models import (
+    QCNN,
+    state2data,
+)
 
 
 class QnetworkAgent:
     def __init__(self, env, nn_hparams, learn_style='mini_batch'):
-        actions = env.actions
-        self.actions_name_list = []
-        self.action_indexes = {}
-        for i in range(len(actions)):
-            self.actions_name_list.append(actions[i].name)
-            self.action_indexes[actions[i].name] = i
+        self.actions = [*range(len(env.actions))]
         self.next_action = self.get_random_action()
 
         # learning-related parameters
@@ -33,7 +31,7 @@ class QnetworkAgent:
         self.step_counter = 0
 
         # neural network output q value for each action given state as input
-        self.nn = QCNN(env.obs_shape, len(actions), nn_hparams)
+        self.nn = QCNN(env.obs_shape, len(self.actions), nn_hparams)
         self.target_q_model = keras.models.clone_model(self.nn.nn)
         self.target_q_model.set_weights(self.nn.nn.get_weights())
 
@@ -55,46 +53,44 @@ class QnetworkAgent:
         return self.next_action
 
     def get_random_action(self):
-        return random.choice(self.actions_name_list)
+        return random.choice(self.actions)
 
     def get_best_action(self, state):
         data = state2data(state)
         qout = self.nn.forward_prop(data, 1)
-        action_index = np.argmax(qout[0])
-        return int(action_index)
+        action = np.argmax(qout[0])
+        return int(action)
 
     def learn(self, parent_sim, epochs=10):
         # get a batch
         if self.learn_style == 'all_experience':
             batch = parent_sim.experience_data.get_batch(
-                        parent_sim.experience_data.max_size-1)
+                        parent_sim.experience_data.max_size - 1)
         elif self.learn_style == 'mini_batch':
             batch = parent_sim.experience_data.get_batch(self.batch_size)
 
         # get a q-value
         t_before_train = time.time()
-        qout = self.nn.forward_prop(batch['state'], self.batch_size)
-        qout_next_state = self.target_q_model.predict(batch['new_state'],
+        qout = self.nn.forward_prop(batch['states'], self.batch_size)
+        qout_next_state = self.target_q_model.predict(batch['new_states'],
                                                       self.batch_size)
 
         # calc rewards
         for i in range(len(qout)):
-            action_name = int(batch['action'][i][0])
-            action_index = self.action_indexes[action_name]
-
+            action = int(batch['actions'][i][0])
             # TODO: Write a test for this codes
-            qout[i][int(action_index)] = batch['reward'][i][0]
-            if not batch['done'][i]:
-                decayed_r = self.next_reward_decay*max(qout_next_state[i])
-                qout[i][int(action_index)] += decayed_r
+            qout[i][action] = batch['rewards'][i][0]
+            if not batch['dones'][i]:
+                decayed_r = self.next_reward_decay * max(qout_next_state[i])
+                qout[i][action] += decayed_r
 
         # train
         if self.learn_style == 'all_experience':
-            self.nn.train(batch['state'], qout, self.batch_size,
+            self.nn.train(batch['states'], qout, self.batch_size,
                           epochs=epochs, verbose=2, vsplit=0.2)
             self.target_train()
         elif self.learn_style == 'mini_batch':
-            self.nn.train(batch['state'], qout,
+            self.nn.train(batch['states'], qout,
                           self.batch_size, self.fit_iterations)
             if self.step_counter % self.target_network_update_freq == 0:
                 self.target_train()

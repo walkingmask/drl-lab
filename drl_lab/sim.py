@@ -13,17 +13,10 @@ class Simulator:
         self.env = create_env(env_hparams)
         self.agent = QnetworkAgent(self.env, nn_hparams)
 
-        action_size = 1  # actions take during one step
-        reward_size = 1  # reward vector size
         max_experience_size = 50000  # Memory size
+        self.experience_data = Memory(self.env.obs_shape, max_experience_size)
 
-        self.experience_data = Memory(self.env.obs_shape,
-                                      action_size,
-                                      reward_size,
-                                      max_experience_size
-                                      )
-
-        # actions repeated skip_frames -1 times
+        # actions repeated skip_frames-1 times
         self.skip_frames = 1
         self.skip_frame_timer = self.skip_frames
         self.episode_max_length = 10000
@@ -80,8 +73,8 @@ class Simulator:
             r = np.clip(reward, -1, 1)
             if not test_agent:
                 if self.skip_frame_timer == 1:
-                    self.experience_data.add_data(prev_state, action,
-                                                  observation, r, done)
+                    self.experience_data.add(prev_state, action,
+                                             observation, r, done)
 
             if t == self.episode_max_length:  # never
                 print("episode max length reached")

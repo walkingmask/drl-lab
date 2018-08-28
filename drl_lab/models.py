@@ -1,9 +1,11 @@
 import keras
-from keras.layers import Activation
-from keras.layers import Dense
-from keras.layers import Flatten
-from keras.layers import Conv2D
-from keras.layers import GlobalAveragePooling2D
+from keras.layers import (
+    Activation,
+    Dense,
+    Flatten,
+    Conv2D,
+    GlobalAveragePooling2D,
+)
 from keras.models import Sequential
 import numpy as np
 
@@ -54,9 +56,11 @@ class QCNN:
 
     def train(self, X, Y, batch_size, epochs=1,
               verbose=0, vsplit=0.0, shuffle=False):
-        self.nn.fit(X, Y, batch_size=batch_size, epochs=epochs,
-                    verbose=verbose, callbacks=[], validation_split=vsplit,
-                    validation_data=None, shuffle=False)
+        self.nn.fit(X, Y,
+                    batch_size=batch_size, epochs=epochs,
+                    verbose=verbose, callbacks=[],
+                    validation_split=vsplit, validation_data=None,
+                    shuffle=False)
 
     def forward_prop(self, np_dataX, batch_size):
         return self.nn.predict(np_dataX, batch_size=batch_size)

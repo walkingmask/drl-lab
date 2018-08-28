@@ -32,11 +32,6 @@ class TestSimulator(unittest.TestCase):
         self.assertFalse(sim.done)
         self.assertIsNone(sim.last_action)
 
-        expected = 1
-        self.assertEqual(expected, sim.experience_data.a_size)
-        expected = 50000
-        self.assertEqual(expected, sim.experience_data.max_size)
-
         expected = 0.0
         self.assertEqual(expected, sim.times['total'])
         self.assertEqual(expected, sim.times['get_action'])
@@ -61,7 +56,7 @@ class TestSimulator(unittest.TestCase):
         self.assertEqual(expected, sim.skip_frame_timer)
         self.assertIsNotNone(sim.last_action)
         expected = 10
-        self.assertEqual(expected, sim.experience_data.current_row)
+        self.assertEqual(expected, sim.experience_data.index)
 
         # Run as test_agent
         sim.run(test_agent=True, iterations=10)

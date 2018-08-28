@@ -49,7 +49,7 @@ nn_hparams = {
 # overwrite with arguments
 
 parser = ArgumentParser()
-parser.add_argument('--name', default='exp', help='Experiment name.')
+parser.add_argument('--name', default='expt', help='Experiment name.')
 parser.add_argument('--hparams', help='Path to hparams.py.')
 parser.add_argument('--env-id',  help='Environemt id of gym or gym-ple.')
 parser.add_argument('--obs-normailize', action='store_true',

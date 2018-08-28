@@ -15,24 +15,16 @@ def rgb2gray(rgb):
     return np.dot(rgb[..., :3], [0.299, 0.587, 0.114])
 
 
-def draw_shadow(self, image, of, thresh=0.6):
-    shadows = np.ones_like(image)/2
+def draw_shadow(image, of, thresh=0.6):
+    shadows = np.ones_like(image)
     of_y = of[0:, 0:, 1]
-    shadows[of_y > thresh] = 1.0
-    shadows[of_y <= thresh] = 0
+    shadows[of_y < thresh] = 0
     return shadows
-
-
-class Action:
-    def __init__(self, name, _range, discrete):
-        self.name = name
-        self.range = _range
-        self.discrete = discrete
 
 
 class PreprocessedEnv(gym.Wrapper):
     def __init__(self, env, **kwargs):
-        super(PreprocessedEnv, self).__init__(env)
+        super().__init__(env)
 
         # observation settings
         self.original_dim = list(self.env.observation_space.shape)
@@ -54,13 +46,13 @@ class PreprocessedEnv(gym.Wrapper):
             self.obs_shape = self.rescaled_shape
 
         # action settings
-        self.actions = []
+        self.actions = []  # mapped its index and action_space index
         excluded_actions = kwargs['action']['excluded_actions']
         if excluded_actions is None:
             excluded_actions = []
         for action in range(self.env.action_space.n):
             if action not in excluded_actions:
-                self.actions.append(Action(action, [0, 1], True))
+                self.actions.append(action)
 
         # pre-activation
         self._reset(**kwargs['observation'])
@@ -91,8 +83,8 @@ class PreprocessedEnv(gym.Wrapper):
 
     def action(self, action):
         self.last_action_raw = action
-        self.last_action = self.actions[action].name
-        return self.actions[action].name
+        self.last_action = self.actions[action]
+        return self.last_action
 
     def observation(self, observation):
         self.last_obs_raw = np.copy(observation)

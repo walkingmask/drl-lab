@@ -1,21 +1,32 @@
+from copy import deepcopy
 import unittest
 
 import keras
+import numpy as np
 
-from drl_lab.models import QCNN, dataset2XY, state2data, load_model
+from drl_lab.models import (
+    build_QCNN,
+    QCNN,
+    dataset2XY,
+    state2data,
+    load_model,
+)
 from tests.common import (
-    batch_size,
-    dataset,
-    dataset_num,
-    deepcopy,
-    get_resources_dir,
     nn_hparams,
-    num_actions,
-    os,
-    state,
-    state_shape,
+    get_test_model_path,
     weights_equal,
 )
+
+batch_size = 10
+obs_shape = (5, 5, 3)
+dataset_num = 100
+dataset = [{
+    'input': np.random.randn(*obs_shape),
+    'output': np.random.permutation([1, 0, 0]),
+} for i in range(dataset_num)]
+state_shape = obs_shape
+state = np.random.randn(*state_shape)
+num_actions = 3
 
 
 class TestQCNN(unittest.TestCase):
@@ -128,6 +139,13 @@ class TestQCNN(unittest.TestCase):
 
 
 class TestModel(unittest.TestCase):
+    def test_build_QCNN(self):
+        model = build_QCNN(obs_shape, num_actions, nn_hparams['layers'],
+                           nn_hparams['learn_rate'], nn_hparams['optimizer'])
+
+        expected = 9
+        self.assertEqual(expected, len(model.layers))
+
     def test_dataset2XY(self):
         X, Y = dataset2XY(dataset)
         self.assertEqual(len(X), dataset_num)
@@ -142,17 +160,14 @@ class TestModel(unittest.TestCase):
         self.assertEqual(data.shape, (1, *state_shape))
 
     def test_load_model(self):
-        resources_root = get_resources_dir()
-        test_model = resources_root+'/test_model'
-        if not os.path.exists(test_model):
-            raise FileNotFoundError(test_model)
+        test_model_path = get_test_model_path()
 
-        nn = load_model(test_model)
+        nn = load_model(test_model_path)
         expected = "<class 'keras.models.Sequential'>"
         self.assertTrue(expected, str(type(nn)))
 
         _nn_hparams = deepcopy(nn_hparams)
-        _nn_hparams['saved_model'] = test_model
+        _nn_hparams['saved_model'] = test_model_path
         qcnn = QCNN(state_shape, num_actions, _nn_hparams)
         expected = "<class 'keras.models.Sequential'>"
         self.assertTrue(expected, str(type(qcnn.nn)))
