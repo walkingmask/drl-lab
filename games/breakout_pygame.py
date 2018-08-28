@@ -206,7 +206,7 @@ class Block(pygame.sprite.Sprite):
 
 class Breakout_pygame(PyGameWrapper):
     def __init__(self, width=60, height=60,
-                 paddle_speed_ratio=0.9, ball_speed_ratio=0.4, MAX_SCORE=1):
+                 paddle_speed_ratio=0.9, ball_speed_ratio=0.4):
         actions = {
             "left": K_LEFT,
             "right": K_RIGHT,
@@ -364,8 +364,6 @@ class Breakout_pygame(PyGameWrapper):
     def step(self, dt):
         dt /= 1000.0
         self.screen.fill((0, 0, 0))
-
-        self.score = 0.0
 
         self.player.speed = self.paddle_speed_ratio * self.height
         self.ball.speed = self.ball_speed_ratio * self.height
