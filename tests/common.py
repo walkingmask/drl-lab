@@ -2,11 +2,18 @@ from copy import deepcopy  # NOQA
 import numpy as np
 import os
 
+from PIL import Image
+
 from drl_lab.env import Action
-from drl_lab.expt import array2images, save_images  # NOQA
+from drl_lab.models import load_model
 
 
-# dependent variables
+"""
+Variables
+---------
+"""
+
+
 actions = [Action(0, [0, 1], True),
            Action(1, [0, 1], True),
            Action(2, [0, 1], True),
@@ -60,6 +67,12 @@ state = np.random.randn(*state_shape)
 states = np.random.randn(32, *state_shape)
 
 
+"""
+Resource management methods
+-------- ---------- -------
+"""
+
+
 def get_resources_dir():
     here = os.path.dirname(os.path.realpath(__file__))
     resources_root = here+'/resources'
@@ -68,12 +81,57 @@ def get_resources_dir():
     return resources_root
 
 
-def get_results_dir():
+def get_test_model(model_name='model1'):
+    resource_dir = get_resources_dir()
+    model_path = resource_dir+'/models/'+model_name
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(model_path)
+    return load_model(model_path)
+
+
+def get_test_images_as_list(images_name='images1'):
+    resource_dir = get_resources_dir()
+    images_path = resource_dir+'/images/'+images_name
+    if not os.path.exists(images_path):
+        raise FileNotFoundError(images_path)
+    images = []
+    for something in os.listdir(images_path):
+        if something[0] == '.':
+            continue
+        image = Image.open(something)
+        images.append(image)
+    return images
+
+
+def get_test_images_as_array(images_name='images1'):
+    images = get_test_images_as_list(images_name)
+    images_array = []
+    for image in images:
+        image_array = np.array(image)
+        images_array.append(image_array)
+    return np.array(images_array)
+
+
+"""
+Results management methods
+------- ---------- -------
+"""
+
+
+def get_results_root():
     here = os.path.dirname(os.path.realpath(__file__))
     results_root = here+'/results/test_'+str(os.getpid())
     if not os.path.exists(results_root):
         os.makedirs(results_root)
     return results_root
+
+
+def get_results_dir(dir_name):
+    results_root = get_results_root()
+    results_dir = results_root+'/'+dir_name
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+    return results_dir
 
 
 def weights_equal(source_model, target_model):

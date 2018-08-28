@@ -1,16 +1,14 @@
 import keras
 from keras.layers import Activation
 from keras.layers import Dense
-# from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.layers import Conv2D
 from keras.layers import GlobalAveragePooling2D
-# from keras.layers import MaxPooling2D
 from keras.models import Sequential
 import numpy as np
 
 
-# Build Network (for gcam)
+# Build Network
 def build_QCNN(input_shape, output_size, layers, learn_rate, optimizer):
     model = Sequential()
     initial = True
