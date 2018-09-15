@@ -16,9 +16,10 @@ class Simulator:
 
         self.max_steps = max_steps  # Max steps in this simulation
         self.initial_steps = int(max_steps*0.001)  # Initial explorations
-        max_experience_size = int(max_steps*0.02)  # Memory size
+        # max_experience_size = int(max_steps*0.02)  # Memory size
+        max_experience_size = int(max_steps*0.002)  # Memory size
         self.experience_data = Memory(self.env.obs_shape, max_experience_size)
-        self.epsilon_discount = 1.0/(max_steps/5)
+        self.epsilon_discount = 1.0/(max_steps/50)
 
         self.steps = 0  # Total steps count
 
