@@ -10,8 +10,7 @@ import sys
 
 from drl_lab.expt import Experiment
 
-
-# default hyper parameters
+# Default hyper parameters
 
 env_hparams = {
     'env_id': 'Breakout_pygame-v0',
@@ -26,11 +25,9 @@ env_hparams = {
 }
 
 run_hparams = {
-    'test': False,
     'verbose': False,
-    'save_at': [],  # None or [...] or int
-    'interval': 2000,
-    'max_steps': 400000,
+    'save_at': None,  # None, int, list of float or int
+    'max_steps': 1000,
     'num_runs': 1,
 }
 
@@ -46,7 +43,15 @@ nn_hparams = {
     'saved_model': None,
 }
 
-# overwrite with arguments
+agent_hparams = {
+    'reward_decay': 0.99,
+    'initial_epsilon': 1.0,
+    'final_epsilon': 0.1,
+    'batch_size': 32,
+    'target_q_network_update_freq': 10,
+}
+
+# Overwrite hprams with arguments
 
 parser = ArgumentParser()
 parser.add_argument('--name', default='expt', help='Experiment name.')
@@ -56,18 +61,14 @@ parser.add_argument('--obs-normailize', action='store_true',
                     help="Enable observation normalization.")
 parser.add_argument('--obs-opt-flow', action='store_true',
                     help="Enable observation opt-flow.")
-parser.add_argument('--interval', type=int,
-                    help="Specify interval.")
 parser.add_argument('--max-steps', type=int,
                     help="Specify max_steps.")
-parser.add_argument('--test', action='store_true',
-                    help="Enable test.")
 parser.add_argument('-v', '--verbose', action='store_true',
                     help="Enable verbose.")
 parser.add_argument('--num-runs', type=int,
                     help="Specify num_runs.")
 parser.add_argument('-s', '--save',  action='store_true',
-                    help='Saved something.')
+                    help='Save something.')
 parser.add_argument('--saved-model',  help='Path to saved model.')
 parser.add_argument('--learn-rate', type=int,
                     help="Specify learn_rate.")
@@ -87,16 +88,14 @@ if args.hparams is not None:
         run_hparams[k] = hparams.run_hparams[k]
     for k in hparams.nn_hparams.keys():
         nn_hparams[k] = hparams.nn_hparams[k]
+    for k in hparams.agent_hparams.keys():
+        agent_hparams[k] = hparams.agent_hparams[k]
 if args.env_id is not None:
     env_hparams['env_id'] = args.env_id
 if args.obs_opt_flow:
     env_hparams['observation']['opt_flow'] = True
-if args.interval is not None:
-    run_hparams['interval'] = args.interval
 if args.max_steps is not None:
     run_hparams['max_steps'] = args.max_steps
-if args.test:
-    run_hparams['test'] = True
 if args.verbose:
     run_hparams['verbose'] = True
 if args.save:
@@ -110,8 +109,7 @@ if args.learn_rate is not None:
 if args.optimizer is not None:
     nn_hparams['optimizer'] = args.optimizer
 
-
-# run
+# Run
 
 if args.verbose:
     JST = timezone(timedelta(hours=+9), 'JST')
@@ -121,8 +119,10 @@ if args.verbose:
         'env_hparams': env_hparams,
         'run_hparams': run_hparams,
         'nn_hparams': nn_hparams,
+        'agent_hparams': agent_hparams,
     })
 
 if not args.dry_run:
     expt = Experiment(args.name)
-    expt.run(env_hparams, run_hparams, nn_hparams)
+    expt.init(env_hparams, run_hparams, nn_hparams, agent_hparams)
+    expt.run()

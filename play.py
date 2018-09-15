@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 from skimage.transform import rescale as sk_rescale
 
-from drl_lab.agents import QnetworkAgent
+from drl_lab.agents import QNetworkAgent
 from drl_lab.env import create_env
 from drl_lab.expt import deprocess, arrays2images, save_gif
 from drl_lab.gcam import GradCam, colorize_cam
@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
         # load the model
         nn_hparams['saved_model'] = model_files[model_file]
-        agent = QnetworkAgent(env, nn_hparams)
+        agent = QNetworkAgent(env, nn_hparams)
 
         # grad-cams
         grad_cams = []

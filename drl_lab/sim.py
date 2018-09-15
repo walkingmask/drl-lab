@@ -1,109 +1,103 @@
-import time
-
 import numpy as np
 
 from drl_lab.env import create_env
 from drl_lab.memory import Memory
-from drl_lab.agents import QnetworkAgent
+from drl_lab.agents import QNetworkAgent
 
 
 class Simulator:
-    def __init__(self, env_hparams, nn_hparams,
-                 max_iterations=100000, interval=20):
+    def __init__(self, env_hparams, nn_hparams, agent_hparams,
+                 watcher, saver, max_steps=100000):
         self.env = create_env(env_hparams)
-        self.agent = QnetworkAgent(self.env, nn_hparams)
+        self.agent = QNetworkAgent(self.env, nn_hparams, agent_hparams)
 
-        max_experience_size = 50000  # Memory size
+        self.watcher = watcher
+        self.saver = saver
+
+        """
+        self.max_steps = max_steps  # Max steps in this simulation
+        self.initial_steps = int(max_steps*0.001)  # Initial explorations
+        max_experience_size = int(max_steps*0.02)  # Memory size
         self.experience_data = Memory(self.env.obs_shape, max_experience_size)
+        self.epsilon_discount = 1.0/(max_steps/50)
+        """
 
-        # actions repeated skip_frames-1 times
-        self.skip_frames = 1
-        self.skip_frame_timer = self.skip_frames
-        self.episode_max_length = 10000
+        self.max_steps = 100000
+        self.initial_steps = 1000
+        max_experience_size = 5000
+        self.experience_data = Memory(self.env.obs_shape, max_experience_size)
+        self.epsilon_discount = 1.0/10000
 
-        self.max_iterations = max_iterations
-        self.interval = interval
-        self.rewards = []
-        self.temp_rews = 0
-        self.done = False
-        self.last_action = None
+        self.steps = 0  # Total steps count
 
-        self.times = {"total": 0.0, "get_action": 0.0,
-                      "train": 0.0, "create_batch": 0.0}
+    def run(self, num_run):
+        if self.watcher:
+            self.watcher.start(num_run)
 
-    def run(self, test_agent=False, update=False, iterations=1000):
+        # Save initial model
+        self.saver.save_model(self.agent.q_network.model, num_run, 'init')
+
+        # Initialize
+        best_reward = -10000
+        rewards_per_episode = []
+        steps_per_episode = []
+
+        episode_reward = 0
+        episode_steps = 0
+
         self.env.seed()
         observation = self.env.reset()
 
-        # episode mode
-        if iterations < 0:
-            iterations = self.episode_max_length
-            episode_reward = 0
-        episode_mode = 'episode_reward' in locals()
-
-        all_rewards = []
-
-        for t in range(iterations):
-            if self.skip_frame_timer == self.skip_frames:
-                if not test_agent:
-                    if update:
-                        self.agent.update(self)
-                    t_before_action = time.time()
-                    action = self.agent.get_next_action(observation)
-                    self.times["get_action"] += time.time() - t_before_action
-                else:
-                    # self.env.render()
-                    action = self.agent.get_best_action(observation)
-                self.skip_frame_timer = 0
-            self.skip_frame_timer += 1
-            self.last_action = action
+        while True:
             prev_state = np.copy(observation)
+            action = self.agent.get_next_action(observation)
             observation, reward, done, info = self.env.step(action)
-            all_rewards.append(reward)
+            cliped_reward = np.clip(reward, -1, 1)
 
-            if episode_mode:
-                episode_reward += reward
-                self.temp_rews += reward
-                if self.agent.step_counter % self.interval == 0:
-                    self.rewards.append(np.mean(self.temp_rews))
-                    self.temp_rews = 0
-                if self.agent.step_counter > self.max_iterations:
-                    self.done = True
+            self.experience_data.add(
+                prev_state, action, observation, cliped_reward, done)
 
-            r = np.clip(reward, -1, 1)
-            if not test_agent:
-                if self.skip_frame_timer == 1:
-                    self.experience_data.add(prev_state, action,
-                                             observation, r, done)
+            if self.steps > self.initial_steps:
+                self.agent.learn(self)
+                if self.agent.epsilon >= self.agent.final_epsilon:
+                    self.agent.epsilon -= self.epsilon_discount
 
-            if t == self.episode_max_length:  # never
-                print("episode max length reached")
-                if not episode_mode:
-                    done = True
+            episode_reward += cliped_reward
+            episode_steps += 1
+            self.steps += 1
+
+            # save en route
+            if self.saver.save_at(self.steps):
+                self.saver.save_model(self.agent.q_network.model,
+                                      num_run,
+                                      self.steps)
 
             if done:
-                self.skip_frame_timer = self.skip_frames
-                if episode_mode:
-                    break
-                else:
-                    self.env.seed()
-                    observation = self.env.reset()
+                if episode_reward > best_reward:
+                    best_reward = episode_reward
+                    self.saver.save_model(
+                        self.agent.q_network.model, num_run, 'best')
+                    if self.watcher:
+                        self.watcher.best_score(best_reward)
 
-        if not test_agent:
-            if self.agent.explore_chance > self.agent.exploration_final_eps:
-                if update:
-                    rate = 0.9 if episode_mode else 0.8
-                    self.agent.explore_chance *= rate
+                if self.watcher:
+                    epsilon = np.round(self.agent.epsilon, 2)
+                    self.watcher.watch(episode_steps, episode_reward, epsilon)
 
-        if episode_mode:
-            return episode_reward
-        else:
-            return all_rewards
+                rewards_per_episode.append(episode_reward)
+                steps_per_episode.append(episode_steps)
 
-    def run_repeatedly(self, num_runs=10, iterations=1000, update=True):
-        results = []
-        for i in range(num_runs):
-            results.append(
-                self.run(
-                    test_agent=False, update=update, iterations=iterations))
-        return results
+                episode_reward = 0
+                episode_steps = 0
+
+                self.env.seed()
+                observation = self.env.reset()
+
+            if self.steps >= self.max_steps:
+                break
+
+        self.saver.save_steps_rewards(
+            num_run, rewards_per_episode, steps_per_episode)
+
+        if self.watcher:
+            self.watcher.start(num_run)
