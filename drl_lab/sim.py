@@ -14,19 +14,11 @@ class Simulator:
         self.watcher = watcher
         self.saver = saver
 
-        """
         self.max_steps = max_steps  # Max steps in this simulation
         self.initial_steps = int(max_steps*0.001)  # Initial explorations
         max_experience_size = int(max_steps*0.02)  # Memory size
         self.experience_data = Memory(self.env.obs_shape, max_experience_size)
-        self.epsilon_discount = 1.0/(max_steps/50)
-        """
-
-        self.max_steps = 100000
-        self.initial_steps = 1000
-        max_experience_size = 5000
-        self.experience_data = Memory(self.env.obs_shape, max_experience_size)
-        self.epsilon_discount = 1.0/10000
+        self.epsilon_discount = 1.0/(max_steps/5)
 
         self.steps = 0  # Total steps count
 
