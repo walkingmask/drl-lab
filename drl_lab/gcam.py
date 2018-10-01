@@ -112,9 +112,9 @@ class GradCAM:
 
         weights = np.mean(gradients, axis=(0, 1))
         cam = np.dot(feature_maps, weights)
+        cam = np.maximum(cam, 0)
 
         cam = cv2.resize(cam, (image.shape[1:-1]))
-        cam = np.maximum(cam, 0)
         cam = (cam + 1e-10) / (np.max(cam) + 1e-10)
 
         return cam
@@ -140,6 +140,7 @@ def colorize_cam(cam, image):
     cam and image must be same size.
     """
     cam = cv2.applyColorMap(np.uint8(255*cam), cv2.COLORMAP_JET)
+    cam = cam[:, :, ::-1]
     cam = np.float32(cam) + np.float32(image)
     cam = (255 * cam + 1e-10) / (np.max(cam) + 1e-10)
     cam = np.uint8(cam)
@@ -418,7 +419,7 @@ class GradCAMOld:
 
         weights = np.mean(grads_val, axis=(0, 1))
 
-        cam = np.ones(output.shape[0:2], dtype=np.float32)
+        cam = np.zeros(output.shape[0:2], dtype=np.float32)
         for i, w in enumerate(weights):
             cam += w * output[:, :, i]
         cam = cv2.resize(cam, (image.shape[1:-1]))

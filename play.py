@@ -9,8 +9,8 @@ from skimage.transform import rescale as sk_rescale
 
 from drl_lab.agents import QNetworkAgent
 from drl_lab.env import create_env
-from drl_lab.expt import deprocess, arrays2images, save_gif
-from drl_lab.gcam import GradCam, colorize_cam
+from drl_lab.utils import deprocess, arrays2images, save_gif
+from drl_lab.gcam import GradCAM, colorize_cam
 
 
 def check_existence(path):
@@ -24,7 +24,8 @@ def get_hprams(parent_path):
     hparams = machinery.SourceFileLoader('hparams', hparams_file).load_module()
     env_hparams = hparams.env_hparams
     nn_hparams = hparams.nn_hparams
-    return env_hparams, nn_hparams
+    agent_hparams = hparams.agent_hparams
+    return env_hparams, nn_hparams, agent_hparams
 
 
 def get_model_files(parent_path):
@@ -112,9 +113,9 @@ def draw_action_as_array(action, num_actions, shape):
     return action_array
 
 
-def generate_gif_from_results_directory(results_directory):
+def generate_gif_from_results_directory(results_directory, max_steps):
     results_array = []
-    for step_index in range(1000):
+    for step_index in range(max_steps):
         step_results_path = \
             "{}/steps/{:04d}.npy".format(results_directory, step_index)
         action, _, observation, raw_observation, cams = \
@@ -124,8 +125,9 @@ def generate_gif_from_results_directory(results_directory):
             action[0], len(cams), observation.shape)
         observation = deprocess(observation, False)
 
-        results = np.concatenate(
-            (action_array, observation, raw_observation), axis=1)
+        # results = np.concatenate(
+        #     (action_array, observation, raw_observation), axis=1)
+        results = raw_observation
         for cam in cams:
             results = np.concatenate((results, cam), axis=1)
 
@@ -133,7 +135,32 @@ def generate_gif_from_results_directory(results_directory):
 
     images = arrays2images(results_array)
     save_path = "{}/all.gif".format(results_directory)
-    save_gif(save_path, images)
+    save_gif(images, save_path)
+
+
+def play_simple(target_results_directory):
+    check_existence(target_results_directory)
+    env_hparams, nn_hparams, agent_hparams = \
+        get_hprams(target_results_directory)
+    model_files = get_model_files(target_results_directory)
+    env = create_env(env_hparams)
+
+    for model_file in model_files:
+        print("[* Model file *]: {}".format(model_file))
+
+        # load the model
+        nn_hparams['saved_model'] = model_files[model_file]
+        agent = QNetworkAgent(env, nn_hparams, agent_hparams)
+        agent.epsilon = 0.05
+
+        observation = env.reset()
+
+        while True:
+            action = agent.get_next_action(observation)
+            observation, reward, done, _ = env.step(action)
+            env.render()
+            if done:
+                break
 
 
 if __name__ == '__main__':
@@ -143,11 +170,13 @@ if __name__ == '__main__':
     print("[* Play target directory *]: {}".format(target_results_directory))
 
     # hprams
-    env_hparams, nn_hparams = get_hprams(target_results_directory)
+    env_hparams, nn_hparams, agent_hparams = \
+        get_hprams(target_results_directory)
     print('[* Hparams loaded *]:')
     pprint({
         'env_hparams': env_hparams,
         'nn_hparams': nn_hparams,
+        'agent_hparams': agent_hparams,
     })
 
     # models
@@ -175,13 +204,14 @@ if __name__ == '__main__':
 
         # load the model
         nn_hparams['saved_model'] = model_files[model_file]
-        agent = QNetworkAgent(env, nn_hparams)
+        agent = QNetworkAgent(env, nn_hparams, agent_hparams)
+        agent.epsilon = 0.05
 
         # grad-cams
         grad_cams = []
         for action_index in range(num_actions):
-            grad_cams.append(
-                GradCam(agent.nn.nn, action_index, 4, num_actions))
+            grad_cams.append(GradCAM(
+                agent.q_network.model, -1, 5, action_index, num_actions))
 
         initialize_play_results_directory(
                         play_results_model_directory, num_actions)
@@ -190,11 +220,29 @@ if __name__ == '__main__':
 
         print("[* Initialized *]")
 
-        for step_index in range(1000):  # until 1000 steps or done
-            print('>', end='', flush=True)  # progress
+        qs = []
+        camss = []
 
-            action = agent.get_best_action(observation)
-            observation, reward, _, _ = env.step(action)
+        for step_index in range(1000):  # until 1000 steps or done
+            # print('>', end='', flush=True)  # progress
+
+            action = agent.get_next_action(observation)
+            observation, reward, done, _ = env.step(action)
+            if done:
+                break
+
+            qout = agent.q_network.forward_prop(
+              [observation.reshape(1, *observation.shape)], 1)
+
+            print(
+                'Q: ',
+                qout[0],
+                qout[0].mean(),
+                qout[0].var(),
+                qout[0].max() - qout[0].min(),
+            )
+            qs.append(list(qout[0]))
+
             raw_observation = env.last_obs_raw
             if env.rescale:
                 raw_observation = sk_rescale(
@@ -204,11 +252,26 @@ if __name__ == '__main__':
             _observation = observation.reshape(1, *observation.shape)
             for grad_cam in grad_cams:
                 cam = grad_cam.do(_observation)
-                cam = colorize_cam(cam, raw_observation)
                 cams.append(cam)
+
+            print(
+                'DBCs: ',
+                np.sqrt(((cams[0] - cams[1])**2).sum()),
+                np.sqrt(((cams[0] - cams[2])**2).sum()),
+                np.sqrt(((cams[1] - cams[2])**2).sum()),
+            )
+            camss.append([
+                np.sqrt(((cams[0] - cams[1])**2).sum()),
+                np.sqrt(((cams[0] - cams[2])**2).sum()),
+                np.sqrt(((cams[1] - cams[2])**2).sum()),
+            ])
+
+            for i in range(len(cams)):
+                cams[i] = colorize_cam(cams[i], raw_observation)
 
             save_play_results_step(play_results_model_directory,
                                    step_index, action, reward,
                                    observation, raw_observation, cams)
 
-        generate_gif_from_results_directory(play_results_model_directory)
+        generate_gif_from_results_directory(
+            play_results_model_directory, step_index)

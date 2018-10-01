@@ -26,12 +26,14 @@ class Watcher:
         self.last = time.time()
         self.num_run = 0
         self.steps = 0
+        self._best_score = -1
 
         print("[Name] {}".format(self.name))
 
     def start(self, num_run):
         self.num_run = num_run
         self.steps = 0
+        self._best_score = -1
         self.last = time.time()
 
         print("[Run] {}".format(self.num_run))
@@ -52,11 +54,12 @@ class Watcher:
             steps, self.steps, self.max_steps, time_per_step))
         print("[Remainig] {:02d}:{:02d}:{:02d}".format(
             hours, minutes, seconds))
-        print("[Reward] {}".format(reward))
+        print("[Reward] {} (Best {})".format(reward, self._best_score))
         print("[Epsilon] {}".format(epsilon))
 
     def best_score(self, best_score):
         print("[New Best Score] {}".format(best_score))
+        self._best_score = best_score
 
     def fin(self):
         print("[Name] {}".format(self.name))
